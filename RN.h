@@ -76,6 +76,7 @@ class RN
 {
 public:
     // Constructors for different sensor types
+    RN();  // Default constructor
     RN(int motorPin1, int motorPin2, int speedPin);
     RN(int trigPin, int echoPin);
     RN(int s0, int s1, int s2, int s3, int out);
@@ -84,7 +85,15 @@ public:
     RN(int pin, bool isDigital, bool isInput);
     RN(int motorPin1, int motorPin2, int speedPin1, int motorPin3, int motorPin4, int speedPin2); // Constructor for L293D shield
 
-    // Motor control methods
+    // New motor control methods
+    bool begin();  // Initialize the robot
+    void initializeMotor(int pin1, int pin2, int speedPin);  // Initialize motor pins
+    void setMovementSpeed(uint8_t speed);  // Set movement speed (0-255)
+    void moveForward();  // Move forward
+    void moveBackward();  // Move backward
+    void stopMovement();  // Stop movement
+
+    // Existing motor control methods
     bool setMotorSpeed(int motorId, int speed); // motorId: 1-4
     bool setMotorDirection(int motorId, int direction); // motorId: 1-4
     void stopMotor(int motorId); // motorId: 1-4
@@ -97,7 +106,7 @@ public:
     float measureDistance(); // Measure distance using the sensor
 
     // Color sensor methods
-    void begin(); // Initialize the color sensor
+    void beginColorSensor(); // Initialize the color sensor
     unsigned int getIntensityR(); // Get intensity of red color
     unsigned int getIntensityG(); // Get intensity of green color
     unsigned int getIntensityB(); // Get intensity of blue color
@@ -128,6 +137,7 @@ private:
     int _motorPin1, _motorPin2, _speedPin1;
     int _motorPin3, _motorPin4, _speedPin2;
     int _motorSpeed[4]; // Array to hold the speed of 4 motors
+    uint8_t _movementSpeed; // Speed for movement functions
 
     // Distance sensor pins
     int _trigPin, _echoPin;

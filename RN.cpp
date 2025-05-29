@@ -16,6 +16,15 @@
 #define ERROR_OUT_OF_RANGE 3
 #define ERROR_NO_ECHO 4
 
+// Default constructor
+RN::RN() : _motorPin1(-1), _motorPin2(-1), _speedPin1(-1), _motorPin3(-1), _motorPin4(-1), _speedPin2(-1), 
+           _errorState(false), _errorCode(ERROR_NONE), _movementSpeed(255) {
+    // Initialize motor speeds array
+    for(int i = 0; i < 4; i++) {
+        _motorSpeed[i] = 0;
+    }
+}
+
 // Constructor Implementations
 RN::RN(int motorPin1, int motorPin2, int speedPin1) 
     : _motorPin1(motorPin1), _motorPin2(motorPin2), _speedPin1(speedPin1), _motorPin3(-1), _motorPin4(-1), _speedPin2(-1), _errorState(false), _errorCode(ERROR_NONE) {
@@ -192,7 +201,7 @@ float RN::measureDistance() {
 }
 
 // Color sensor methods
-void RN::begin() {
+void RN::beginColorSensor() {
     digitalWrite(_s0, HIGH);
     digitalWrite(_s1, LOW);
 }
@@ -300,4 +309,53 @@ bool RN::isError() {
 
 int RN::getErrorCode() {
     return _errorCode;
+}
+
+// New motor control methods implementation
+bool RN::begin() {
+    // Initialize any required hardware
+    Wire.begin();
+    return true;
+}
+
+void RN::initializeMotor(int pin1, int pin2, int speedPin) {
+    _motorPin1 = pin1;
+    _motorPin2 = pin2;
+    _speedPin1 = speedPin;
+    
+    pinMode(_motorPin1, OUTPUT);
+    pinMode(_motorPin2, OUTPUT);
+    pinMode(_speedPin1, OUTPUT);
+}
+
+void RN::setMovementSpeed(uint8_t speed) {
+    // Constrain speed to 0-100 range
+    speed = constrain(speed, 0, 255);
+    // Map speed from 0-100 to 0-255
+    _movementSpeed = map(speed, 0, 255, 0, 70);
+    Serial.println(_movementSpeed);
+}
+
+void RN::moveForward() {
+    if (_motorPin1 != -1 && _motorPin2 != -1 && _speedPin1 != -1) {
+        digitalWrite(_motorPin1, HIGH);
+        digitalWrite(_motorPin2, LOW);
+        analogWrite(_speedPin1, _movementSpeed);
+    }
+}
+
+void RN::moveBackward() {
+    if (_motorPin1 != -1 && _motorPin2 != -1 && _speedPin1 != -1) {
+        digitalWrite(_motorPin1, LOW);
+        digitalWrite(_motorPin2, HIGH);
+        analogWrite(_speedPin1, _movementSpeed);
+    }
+}
+
+void RN::stopMovement() {
+    if (_motorPin1 != -1 && _motorPin2 != -1 && _speedPin1 != -1) {
+        digitalWrite(_motorPin1, LOW);
+        digitalWrite(_motorPin2, LOW);
+        analogWrite(_speedPin1, 0);
+    }
 }
