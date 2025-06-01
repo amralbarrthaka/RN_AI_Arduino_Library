@@ -1,14 +1,14 @@
-#include "RN.h"
+#include "RN_AI.h"
 
 // Define motor pins
 #define MOTOR_PIN1 3  // Motor direction pin 1
 #define MOTOR_PIN2 4  // Motor direction pin 2
 #define MOTOR_SPEED_PIN 5  // Motor speed (PWM) pin
-#define MOTOR_SPEED 255 // 0 to 255
+#define MOTOR_SPEED 100 // 0 to 255
 // Create RN instance for motor control
-RN robot;
+RN_AI robot;
 
-void setup() {
+void setup() {  
         // Initialize Serial communication
     Serial.begin(115200);
     while (!Serial) delay(10);
