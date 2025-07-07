@@ -262,6 +262,8 @@ void RN_AI::moveForward() {
     digitalWrite(_motorPin1, HIGH);
     digitalWrite(_motorPin2, LOW);
     analogWrite(_speedPin1, _movementSpeed);
+    Serial.print("Moving forward");
+    Serial.println(" Speed: "); Serial.println(_movementSpeed);
     
 
 }
@@ -271,6 +273,8 @@ void RN_AI::moveBackward() {
     digitalWrite(_motorPin1, LOW);
     digitalWrite(_motorPin2, HIGH);
     analogWrite(_speedPin1, _movementSpeed);
+    Serial.print("Moving backward");
+    Serial.println(" Speed: "); Serial.println(_movementSpeed);
     
 
 }
@@ -280,6 +284,7 @@ void RN_AI::stopMovement() {
     digitalWrite(_motorPin1, LOW);
     digitalWrite(_motorPin2, LOW);
     analogWrite(_speedPin1, 0);
+    // Serial.println("Moving stopped");
     
 }
 
@@ -325,19 +330,19 @@ void RN_AI::setServoAngle(int angle) {
     if (!_servoInitialized) {
         _errorState = true;
         _errorCode = ERROR_OUT_OF_RANGE;
-        Serial.println("Error: Servo not initialized!");
+        // Serial.println("Error: Servo not initialized!");
         return;
     }
     
     angle = constrain(angle, _servoMinPosition, _servoMaxPosition);
-    Serial.print("Moving speed: "); Serial.println(_servoSpeed);
+    // Serial.print("Moving speed: "); Serial.println(_servoSpeed);
     // Calculate delay based on speed (faster speed = shorter delay)
     int delayTime = map(_servoSpeed, 0, 255, 50, 5);  // 50ms at slowest, 5ms at fastest
-    Serial.print("Movement delay: "); Serial.println(delayTime);
+    // Serial.print("Movement delay: "); Serial.println(delayTime);
     
     // Get current position
     int currentPos = _servoMotor.read();
-    Serial.print("Starting position: "); Serial.println(currentPos);
+    // Serial.print("Starting position: "); Serial.println(currentPos);
     
     // Move servo gradually to target angle
     while (currentPos != angle) {
@@ -351,8 +356,8 @@ void RN_AI::setServoAngle(int angle) {
         delay(delayTime);
     }
     
-    Serial.print("Final position: "); Serial.println(angle);
-    Serial.println("=== Servo Movement Complete ===\n");
+    // Serial.print("Final position: "); Serial.println(angle);
+    // Serial.println("=== Servo Movement Complete ===\n");
 }
 
 void RN_AI::resetServos() {

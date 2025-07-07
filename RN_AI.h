@@ -8,6 +8,7 @@
 #include <Adafruit_Sensor.h>
 #include "HUSKYLENS.h"
 #include <Servo.h>
+#include <SoftwareSerial.h>
 
 // Define PWM rate for DC motors
 #define DC_MOTOR_PWM_RATE 255 // Adjust as necessary for your motor

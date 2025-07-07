@@ -1,9 +1,9 @@
 #include <RN_AI.h>
 
 // Define motor pins
-#define MOTOR_PIN1 3  // Motor direction pin 1
-#define MOTOR_PIN2 4  // Motor direction pin 2
-#define MOTOR_SPEED_PIN 5  // Motor speed (PWM) pin
+#define MOTOR_PIN1 4  // Motor direction pin 1
+#define MOTOR_PIN2 5  // Motor direction pin 2
+#define MOTOR_SPEED_PIN 6  // Motor speed (PWM) pin
 #define MOTOR_SPEED 150 // 0 to 255
 
 // Define steering servo pin
