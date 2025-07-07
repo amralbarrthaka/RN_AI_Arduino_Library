@@ -16,25 +16,34 @@
 // Default constructor
 RN_AI::RN_AI() : _motorPin1(-1), _motorPin2(-1), _speedPin1(-1), _motorPin3(-1), _motorPin4(-1), _speedPin2(-1), 
            _errorState(false), _errorCode(ERROR_NONE), _movementSpeed(100), _servoInitialized(false),
-           _isForward(false), _isBackward(false), _isRotating(false), _gyroKp(10.0),
-           _steeringServoPin(-1), _steeringCenter(90), _steeringRange(30) {
-
+           _isForward(false), _isBackward(false), _isRotating(false){
+    currentDirection = "stop";
+    previousDirection = "stop";
+    steeringServoInitialized = false;
+    cameraServoInitialized = false;
+    servoSpeed = 255;
+    currentsteeringAngle = 90;
+    currentLowAngle = 90;
 }
 
 // Constructor Implementations
 RN_AI::RN_AI(int motorPin1, int motorPin2, int speedPin1) 
     : _motorPin1(motorPin1), _motorPin2(motorPin2), _speedPin1(speedPin1), _motorPin3(-1), _motorPin4(-1), _speedPin2(-1), 
-      _errorState(false), _errorCode(ERROR_NONE), _servoInitialized(false) {
+      _errorState(false), _errorCode(ERROR_NONE) {
     pinMode(_motorPin1, OUTPUT);
     pinMode(_motorPin2, OUTPUT);
     pinMode(_speedPin1, OUTPUT);
+    currentDirection = "stop";
+    previousDirection = "stop";
 }
 
 // Distance sensor constructor
 RN_AI::RN_AI(int trigPin, int echoPin) 
-    : _trigPin(trigPin), _echoPin(echoPin), _errorState(false), _errorCode(ERROR_NONE), _servoInitialized(false) {
+    : _trigPin(trigPin), _echoPin(echoPin), _errorState(false), _errorCode(ERROR_NONE) {
     pinMode(_trigPin, OUTPUT);
     pinMode(_echoPin, INPUT);
+    currentDirection = "stop";
+    previousDirection = "stop";
 }
 
 // Color sensor constructor
@@ -45,40 +54,22 @@ RN_AI::RN_AI(int s0, int s1, int s2, int s3, int out)
     pinMode(_s2, OUTPUT);
     pinMode(_s3, OUTPUT);
     pinMode(_sensorOut, INPUT);
-}
-
-// Servo constructor
-RN_AI::RN_AI(int servoPin) 
-    : _servoPin(servoPin), _errorState(false), _errorCode(ERROR_NONE), _servoInitialized(false), _servoSpeed(RN_SERVO_DEFAULT_SPEED) {
-    initializeServo(servoPin, RN_SERVO_DEFAULT_ANGLE, RN_SERVO_MIN_ANGLE, RN_SERVO_MAX_ANGLE);
-}
-
-// LED constructor
-RN_AI::RN_AI(int ledPin, bool isLED) 
-    : _ledPin(ledPin), _isLEDControl(isLED), _errorState(false), _errorCode(ERROR_NONE), _servoInitialized(false) {
-    if (_isLEDControl) {
-        pinMode(_ledPin, OUTPUT);
-        digitalWrite(_ledPin, LOW);  // Ensure LED is off initially
-    }
-}
-
-// Digital/Analog reading constructor
-RN_AI::RN_AI(int pin, bool isDigital, bool isInput)
-    : _pin(pin), _isDigital(isDigital), _isInputMode(isInput), _errorState(false), _errorCode(ERROR_NONE), _servoInitialized(false) {
-    pinMode(_pin, isInput ? INPUT : OUTPUT);
+    currentDirection = "stop";
+    previousDirection = "stop";
 }
 
 // L293D shield constructor
 RN_AI::RN_AI(int motorPin1, int motorPin2, int speedPin1, int motorPin3, int motorPin4, int speedPin2) 
     : _motorPin1(motorPin1), _motorPin2(motorPin2), _speedPin1(speedPin1), _motorPin3(motorPin3), _motorPin4(motorPin4), _speedPin2(speedPin2), 
-      _errorState(false), _errorCode(ERROR_NONE), _servoInitialized(false) {
+      _errorState(false), _errorCode(ERROR_NONE) {
     pinMode(_motorPin1, OUTPUT);
     pinMode(_motorPin2, OUTPUT);
     pinMode(_speedPin1, OUTPUT);
     pinMode(_motorPin3, OUTPUT);
     pinMode(_motorPin4, OUTPUT);
     pinMode(_speedPin2, OUTPUT);
-
+    currentDirection = "stop";
+    previousDirection = "stop";
 }
 
 void RN_AI::stopAllMotors() {
@@ -258,28 +249,37 @@ void RN_AI::setMovementSpeed(float speed) {
 }
 
 void RN_AI::moveForward() {
-    // Motor 1 forward
+    _isForward = true;
+    _isBackward = false;
+    _isRotating = false;
+    currentDirection = "forward";
     digitalWrite(_motorPin1, HIGH);
     digitalWrite(_motorPin2, LOW);
     analogWrite(_speedPin1, _movementSpeed);
-    Serial.print("Moving forward");
-    Serial.println(" Speed: "); Serial.println(_movementSpeed);
-    
-
 }
 
 void RN_AI::moveBackward() {
     // Motor 1 backward
+    _isForward = false;
+    _isBackward = true;
+    _isRotating = false;
+    currentDirection = "backward";
     digitalWrite(_motorPin1, LOW);
     digitalWrite(_motorPin2, HIGH);
     analogWrite(_speedPin1, _movementSpeed);
-    Serial.print("Moving backward");
-    Serial.println(" Speed: "); Serial.println(_movementSpeed);
+    // Serial.print("Moving backward");
+    // Serial.println(" Speed: "); Serial.println(_movementSpeed);
     
 
 }
 
 void RN_AI::stopMovement() {
+    _isForward = false;
+    _isBackward = false;
+    _isRotating = true;
+    currentDirection = "stop";
+    // Serial.print("Stopping movement");
+    // Serial.println(currentDirection);
     // Stop motor 1
     digitalWrite(_motorPin1, LOW);
     digitalWrite(_motorPin2, LOW);
@@ -288,82 +288,42 @@ void RN_AI::stopMovement() {
     
 }
 
-// Servo control methods
-void RN_AI::initializeServo(int pin, int defaultPos, int minPos, int maxPos) {
-    _servoPin = pin;
-    _servoDefaultPosition = constrain(defaultPos, minPos, maxPos);
-    _servoMinPosition = minPos;
-    _servoMaxPosition = maxPos;
-    
-    // Don't reset speed here - it should be set by constructor or setServoSpeed
-    _servoMotor.attach(_servoPin);
-    _servoMotor.write(_servoDefaultPosition);
-    _servoInitialized = true;
-    
-    Serial.println("\n=== Servo Initialization ===");
-    Serial.print("Pin: "); Serial.println(_servoPin);
-    Serial.print("Default Position: "); Serial.println(_servoDefaultPosition);
-    Serial.print("Min Position: "); Serial.println(_servoMinPosition);
-    Serial.print("Max Position: "); Serial.println(_servoMaxPosition);
-    Serial.print("Current Speed: "); Serial.println(_servoSpeed);
-    Serial.println("===========================\n");
-}
 
 void RN_AI::setServoSpeed(int speed) {
-    // Store old speed for debug
-    int oldSpeed = _servoSpeed;
-    
-    // Update speed
-    _servoSpeed = constrain(speed, 0, 255);
-    
-    // Calculate delay for debug
-    int delayTime = map(_servoSpeed, 0, 255, 50, 5);
-    
-    Serial.println("\n=== Servo Speed Update ===");
-    Serial.print("Old speed: "); Serial.println(oldSpeed);
-    Serial.print("New speed: "); Serial.println(_servoSpeed);
-    Serial.print("Resulting delay: "); Serial.print(delayTime); Serial.println("ms");
-    Serial.println("========================\n");
+    servoSpeed = constrain(speed, 0, 255);
+    Serial.print("Servo speed set to: ");
+    Serial.println(servoSpeed);
 }
 
-void RN_AI::setServoAngle(int angle) {
-    if (!_servoInitialized) {
-        _errorState = true;
-        _errorCode = ERROR_OUT_OF_RANGE;
-        // Serial.println("Error: Servo not initialized!");
+
+void RN_AI::setSteeringServoAngle(int angle) {
+    if (!steeringServoInitialized) {
+        Serial.println("Steering servo not initialized!");
         return;
     }
     
-    angle = constrain(angle, _servoMinPosition, _servoMaxPosition);
-    // Serial.print("Moving speed: "); Serial.println(_servoSpeed);
-    // Calculate delay based on speed (faster speed = shorter delay)
-    int delayTime = map(_servoSpeed, 0, 255, 50, 5);  // 50ms at slowest, 5ms at fastest
-    // Serial.print("Movement delay: "); Serial.println(delayTime);
+    // Constrain angle to valid range
+    angle = constrain(angle, steeringServoMin, steeringServoMax);
     
-    // Get current position
-    int currentPos = _servoMotor.read();
-    // Serial.print("Starting position: "); Serial.println(currentPos);
+    // Calculate delay based on speed (faster speed = shorter delay)
+    int delayTime = map(servoSpeed, 0, 255, 50, 5);  // 50ms at slowest, 5ms at fastest
     
     // Move servo gradually to target angle
-    while (currentPos != angle) {
-        if (currentPos < angle) {
-            currentPos++;
+    while (currentsteeringAngle != angle) {
+        if (currentsteeringAngle < angle) {
+            currentsteeringAngle++;
         } else {
-            currentPos--;
+            currentsteeringAngle--;
         }
-        currentPos = constrain(currentPos, _servoMinPosition, _servoMaxPosition);
-        _servoMotor.write(currentPos);
+        steeringServo.write(currentsteeringAngle);
         delay(delayTime);
     }
-    
-    // Serial.print("Final position: "); Serial.println(angle);
-    // Serial.println("=== Servo Movement Complete ===\n");
 }
 
 void RN_AI::resetServos() {
     if (_servoInitialized) {
         Serial.println("Resetting servo to default position");
-        setServoAngle(_servoDefaultPosition);
+        setSteeringServoAngle(_servoDefaultPosition);
     } else {
         Serial.println("Error: Cannot reset - Servo not initialized");
     }
@@ -395,127 +355,90 @@ bool RN_AI::calibrateServo(int minPosition, int maxPosition) {
 
 // Gyro movement methods
 void RN_AI::adjustDirectionWithGyro() {
+    updateGyro();
     // Get current yaw
-    float currentYaw = getYaw();
+    float currentYaw = _yaw;
+    if (currentDirection != previousDirection) {
+        // Reset target yaw when direction changes
+        _targetYaw = _yaw;
+        previousDirection = currentDirection;
+        Serial.print("Changed Direction: "); Serial.println(currentDirection);
+    }
+    
     
     // Calculate angle error and normalize to [-180, 180]
-    float angleError = currentYaw - _targetYaw;
+    float angleError =  _targetYaw - currentYaw;
     if (angleError > 180) angleError -= 360;
     if (angleError < -180) angleError += 360;
 
     // Calculate proportional correction
-    float correction = _gyroKp * angleError;
+    float correction = 0.01 * angleError;
+    Serial.print("Correction: "); Serial.println(correction);
     
     // Reverse correction when moving backward
     if (_isBackward) {
         correction = -correction;  // Reverse the correction for backward movement
     }
-    
     // Map correction to servo angle range
-    int servoAngle = _steeringCenter + map(correction, -180, 180, -_steeringRange, _steeringRange);
+    int servoAngle = 90 + correction;
     
     // Constrain servo angle to valid range
-    servoAngle = constrain(servoAngle, _steeringCenter - _steeringRange, _steeringCenter + _steeringRange);
+    servoAngle = constrain(servoAngle, 45, 135);
     
-    // Apply steering correction
-    _servoMotor.write(servoAngle);
+
+    setSteeringServoAngle(servoAngle);
+    Serial.print("Current Yaw: "); Serial.print(currentYaw);
+    Serial.print(" Target Yaw: "); Serial.print(_targetYaw);
+    Serial.print(" Correction: "); Serial.print(correction);
+    Serial.print(" Servo Angle: "); Serial.println(servoAngle);
     
     // Debug output
     static unsigned long lastPrintTime = 0;
     unsigned long currentTime = millis();
-    if (currentTime - lastPrintTime >= 1000) {  // Print every second
-        Serial.print("Yaw: "); Serial.print(currentYaw);
-        Serial.print("° Error: "); Serial.print(angleError);
-        Serial.print("° Correction: "); Serial.print(correction);
-        Serial.print(" Servo: "); Serial.print(servoAngle);
-        Serial.print(" Direction: "); Serial.println(_isBackward ? "Backward" : "Forward");
-        lastPrintTime = currentTime;
-    }
 }
 
 void RN_AI::moveForwardWithGyro() {
-    _isForward = true;
-    _isBackward = false;
-    _isRotating = false;
     moveForward();
-    updateGyro();
     adjustDirectionWithGyro();
-    // printGyroMotorStatus();
+
 }
 
 void RN_AI::moveBackwardWithGyro() {
-    _isForward = false;
-    _isBackward = true;
-    _isRotating = false;
     moveBackward();
-    updateGyro();
     adjustDirectionWithGyro();
-    // printGyroMotorStatus();
+
 }
 
-void RN_AI::stopMovementWithGyro() {
-    _isForward = false;
-    _isBackward = false;
-    _isRotating = false;
-    stopMovement();
-    printGyroMotorStatus();
-}
 
-void RN_AI::printGyroMotorStatus() {
-    // Only print if moving with gyro control
-    if (!_isForward && !_isBackward) {
-        return;
+void RN_AI::initializeSteeringServo(int pin, int defaultAngle, int minAngle, int maxAngle) {
+    // Attach steering servo to its pin
+    steeringServo.attach(pin);
+    
+    // Store angle limits
+    steeringServoMin = constrain(minAngle, 0, 180);
+    steeringServoMax = constrain(maxAngle, 0, 180);
+    
+    // Ensure min is less than max
+    if (steeringServoMin > steeringServoMax) {
+        int temp = steeringServoMin;
+        steeringServoMin = steeringServoMax;
+        steeringServoMax = temp;
     }
-
-    static unsigned long lastPrintTime = 0;
-    unsigned long currentTime = millis();
     
-    // Check if it's time to print (every 1 second)
-    if (currentTime - lastPrintTime < 1000) {
-        return;
-    }
-    lastPrintTime = currentTime;
-
-    // Print status information
-    Serial.print("Yaw: ");
-    Serial.print(getYaw(), 2);
-    Serial.print("° Target: ");
-    Serial.print(getTargetYaw(), 2);
-    Serial.print("° Speed: ");
-    Serial.print(_movementSpeed);
-    Serial.print(" Direction: ");
-    Serial.println(_isForward ? "Forward" : "Backward");
-}
-
-void RN_AI::initializeSteeringServo(int pin, int centerPos, int range) {
-    _steeringServoPin = pin;
-    _steeringCenter = centerPos;
-    _steeringRange = range;
+    // Store and set default angle
+    steeringServoDefault = constrain(defaultAngle, steeringServoMin, steeringServoMax);
+    currentsteeringAngle = steeringServoDefault;
+    steeringServo.write(steeringServoDefault);
     
-    // Initialize the servo
-    _servoMotor.attach(_steeringServoPin);
-    _servoMotor.write(_steeringCenter);
-    
-    Serial.println("\n=== Steering Servo Initialization ===");
-    Serial.print("Pin: "); Serial.println(_steeringServoPin);
-    Serial.print("Center Position: "); Serial.println(_steeringCenter);
-    Serial.print("Steering Range: "); Serial.println(_steeringRange);
-    Serial.println("===================================\n");
-}
-
-void RN_AI::updateTargetAngle(float angleDelta) {
-    updateGyro();
-    // Get current yaw and add the angle delta
-    _targetYaw = _yaw + angleDelta;
-    
-    // Normalize target angle to [0, 360)
-    if (_targetYaw >= 360.0) _targetYaw -= 360.0;
-    if (_targetYaw < 0.0) _targetYaw += 360.0;
-    
-    Serial.print("Current Yaw: "); Serial.print(_yaw);
-    Serial.print("° Adding: "); Serial.print(angleDelta);
-    Serial.print("° New Target: "); Serial.print(_targetYaw);
-    Serial.println("°");
+    steeringServoInitialized = true;
+    Serial.print("steering servo initialized - Pin: ");
+    Serial.print(pin);
+    Serial.print(", Default: ");
+    Serial.print(steeringServoDefault);
+    Serial.print(", Range: ");
+    Serial.print(steeringServoMin);
+    Serial.print("-");
+    Serial.println(steeringServoMax);
 }
 
 

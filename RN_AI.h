@@ -87,6 +87,19 @@ private:
     int _steeringServoPin;  // Pin for steering servo
     int _steeringCenter;    // Center position of steering servo
     int _steeringRange;     // Range of steering movement
+    String currentDirection; // Track current direction
+    String previousDirection; // Track previous direction
+    // Steering servo variables
+    Servo steeringServo;
+    bool steeringServoInitialized;
+    int steeringServoMin;
+    int steeringServoMax;
+    int steeringServoDefault;
+    int currentsteeringAngle;
+    // Camera servo variables (if needed in future)
+    bool cameraServoInitialized;
+    int currentLowAngle;
+    int servoSpeed;
 
 public:
     // Constructors
@@ -113,8 +126,8 @@ public:
     void stopAllMotors();
 
     // Servo control methods
-    void initializeServo(int pin, int defaultPos, int minPos, int maxPos);
     void setServoSpeed(int speed);
+    void setSteeringServoAngle(int angle);
     void setServoAngle(int angle);
     bool calibrateServo(int minPosition, int maxPosition);
     void resetServos();
@@ -151,7 +164,7 @@ public:
     // Gyro movement methods
     void setGyroKp(float kp) { _gyroKp = kp; }
     float getGyroKp() { return _gyroKp; }
-    void initializeSteeringServo(int pin, int centerPos, int range);
+    void initializeSteeringServo(int pin, int defaultAngle, int minAngle, int maxAngle);
     void adjustDirectionWithGyro();
     void moveForwardWithGyro();
     void moveBackwardWithGyro();

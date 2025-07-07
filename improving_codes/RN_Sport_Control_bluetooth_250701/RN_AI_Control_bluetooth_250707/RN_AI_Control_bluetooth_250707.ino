@@ -16,16 +16,14 @@ RN_AI robot;
 #define MOTOR_SPEED_PIN 5  // Motor speed (PWM) pin
 #define MOTOR_SPEED 255 // 0 to 255
 
-// Servo pins
-const int MOVING_SERVO_PIN = 2;  // 
 
-// Servo configuration
-const int MOVING_SERVO_DEFAULT = 98;  // Center position
-const int MOVING_SERVO_MIN = 45;      // Minimum angle
-const int MOVING_SERVO_MAX = 135;      // Maximum angle
+const int STEERING_SERVO_PIN = 2;  // STEERING guide vane servo pin
+const int STEERING_SERVO_DEFAULT = 90;  // Center position
+const int STEERING_SERVO_MIN = 45;      // Minimum angle
+const int STEERING_SERVO_MAX = 135;     // Maximum angle
 
 // Servo speed control
-const int SERVO_SPEED = 255;    // Servo speed 0 to 255
+const int SERVO_SPEED = 220;    // Servo speed 0 to 255
 
 const int step_angle = 25;
 
@@ -92,7 +90,9 @@ void setup() {
     robot.setServoSpeed(SERVO_SPEED);
     
     // Initialize servos with all parameters
-    robot.initializeServo(MOVING_SERVO_PIN, MOVING_SERVO_DEFAULT, MOVING_SERVO_MIN, MOVING_SERVO_MAX);
+    robot.initializeSteeringServo(STEERING_SERVO_PIN, STEERING_SERVO_DEFAULT, STEERING_SERVO_MIN, STEERING_SERVO_MAX);
+    // _steeringCenter
+    // currentsteeringAngle
     
 
     delay(1000);
@@ -180,44 +180,44 @@ void loop() {
         }
     }
 
-    if(last_direction != direction){
-        last_direction = direction;
-        // Existing direction handling code...
-        if (direction == "d,f") {
-            robot.setServoAngle(MOVING_SERVO_DEFAULT);
-            robot.moveForwardWithGyro();
-            // Serial.println("Forward");
-        } else if (direction == "d,b") {
-            robot.setServoAngle(MOVING_SERVO_DEFAULT);
-            robot.moveBackwardWithGyro();                                            
-            // Serial.println("Backward");
-        } else if (direction == "d,l") {
-            robot.setServoAngle(MOVING_SERVO_MIN);
-            robot.moveForward();
-            Serial.println("Left");
-        } else if (direction == "d,r") {
-            robot.setServoAngle(MOVING_SERVO_MAX);
-            robot.moveForward();
-            Serial.println("Right");
-        } else if (direction == "d,fl") {
-            robot.setServoAngle(MOVING_SERVO_DEFAULT - step_angle);
-            robot.moveForward();
-            Serial.println("fl");
-        } else if (direction == "d,fr") {
-            robot.setServoAngle(MOVING_SERVO_DEFAULT + step_angle);
-            robot.moveForward();
-            Serial.println("fr");
-        } else if (direction == "d,bl") {
-            robot.setServoAngle(MOVING_SERVO_DEFAULT - step_angle);
-            robot.moveBackward();
-            Serial.println("bl");
-        } else if (direction == "d,br") {
-            robot.setServoAngle(MOVING_SERVO_DEFAULT + step_angle);
-            robot.moveBackward();
-        } else if (direction == "d,s") {
-            robot.setServoAngle(MOVING_SERVO_DEFAULT);
-            robot.stopMovementWithGyro();
-        }
+
+    // Existing direction handling code...
+    if (direction == "d,f") {
+        robot.setSteeringServoAngle(STEERING_SERVO_DEFAULT);
+        robot.moveForward();
+        Serial.println("Forward");
+    } else if (direction == "d,b") {
+        robot.setSteeringServoAngle(STEERING_SERVO_DEFAULT);
+        robot.moveBackward();                                            
+        Serial.println("Backward");
+    } else if (direction == "d,l") {
+        robot.setSteeringServoAngle(STEERING_SERVO_MIN);
+        robot.moveForward();
+        Serial.println("Left");
+    } else if (direction == "d,r") {
+        robot.setSteeringServoAngle(STEERING_SERVO_MAX);
+        robot.moveForward();
+        Serial.println("Right");
+    } else if (direction == "d,fl") {
+        robot.setSteeringServoAngle(STEERING_SERVO_DEFAULT - step_angle);
+        robot.moveForward();
+        Serial.println("fl");
+    } else if (direction == "d,fr") {
+        robot.setSteeringServoAngle(STEERING_SERVO_DEFAULT + step_angle);
+        robot.moveForward();
+        Serial.println("fr");
+    } else if (direction == "d,bl") {
+        robot.setSteeringServoAngle(STEERING_SERVO_DEFAULT - step_angle);
+        robot.moveBackward();
+        Serial.println("bl");
+    } else if (direction == "d,br") {
+        robot.setSteeringServoAngle(STEERING_SERVO_DEFAULT + step_angle);
+        robot.moveBackward();
+    } else if (direction == "d,s") {
+        robot.setSteeringServoAngle(STEERING_SERVO_DEFAULT);
+        robot.stopMovement();
     }
+    delay(1);
+
 
 }
